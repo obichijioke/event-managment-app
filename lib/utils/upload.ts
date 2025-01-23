@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 
 export async function uploadImage(
   file: File,
-  bucket: string = "images",
+  bucket: string = "general",
   folder: string = "uploads"
 ) {
   try {
@@ -35,7 +35,7 @@ export async function uploadImage(
   }
 }
 
-export async function deleteImage(path: string, bucket: string = "images") {
+export async function deleteImage(path: string, bucket: string = "general") {
   try {
     const supabase = createClient();
     const { error } = await supabase.storage.from(bucket).remove([path]);
@@ -50,7 +50,7 @@ export async function deleteImage(path: string, bucket: string = "images") {
 
 export async function uploadMultipleImages(
   files: File[],
-  bucket: string = "images",
+  bucket: string = "general",
   folder: string = "uploads"
 ) {
   try {

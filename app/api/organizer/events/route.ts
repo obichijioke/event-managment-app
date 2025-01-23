@@ -9,7 +9,8 @@ const eventSchema = z.object({
   start_time: z.string().min(1, "Start time is required"),
   end_time: z.string().min(1, "End time is required"),
   category: z.string().min(1, "Category is required"),
-  image_url: z.string().optional(),
+  cover_image_url: z.string().optional(),
+  gallery_image_urls: z.array(z.string()).optional(),
   is_online: z.boolean().default(false),
   online_url: z.string().optional(),
 });
@@ -85,6 +86,8 @@ export async function POST(request: Request) {
       organizer_id: user.id,
       status: "draft",
     };
+
+    console.log(eventData);
 
     // Insert the event
     const { data: event, error } = await supabase

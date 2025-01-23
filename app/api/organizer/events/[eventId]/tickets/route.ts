@@ -13,11 +13,11 @@ const ticketSchema = z.object({
 
 export async function POST(
   request: Request,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
     const supabase = await createClient();
-
+    const eventId = (await params).eventId;
     // Get the user's session
     const {
       data: { session },
@@ -31,7 +31,7 @@ export async function POST(
     const { data: event, error: eventError } = await supabase
       .from("events")
       .select("id")
-      .eq("id", params.eventId)
+      .eq("id", eventId)
       .eq("user_id", session.user.id)
       .single();
 
@@ -50,7 +50,7 @@ export async function POST(
       .from("tickets")
       .insert({
         ...validatedData,
-        event_id: params.eventId,
+        event_id: eventId,
       })
       .select()
       .single();
@@ -76,11 +76,11 @@ export async function POST(
 
 export async function GET(
   request: Request,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
     const supabase = await createClient();
-
+    const eventId = (await params).eventId;
     // Get the user's session
     const {
       data: { session },
@@ -94,7 +94,7 @@ export async function GET(
     const { data: event, error: eventError } = await supabase
       .from("events")
       .select("id")
-      .eq("id", params.eventId)
+      .eq("id", eventId)
       .eq("user_id", session.user.id)
       .single();
 
@@ -108,7 +108,7 @@ export async function GET(
     const { data: tickets, error } = await supabase
       .from("tickets")
       .select("*")
-      .eq("event_id", params.eventId)
+      .eq("event_id", eventId)
       .order("created_at", { ascending: true });
 
     if (error) {
