@@ -62,17 +62,17 @@ export default function EventDetailPage() {
   }, [params.id]);
 
   // Load Google Maps script
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
+  // useEffect(() => {
+  //   const script = document.createElement("script");
+  //   script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
+  //   script.async = true;
+  //   script.defer = true;
+  //   document.head.appendChild(script);
 
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
+  //   return () => {
+  //     document.head.removeChild(script);
+  //   };
+  // }, []);
 
   const handleShare = async (platform: string) => {
     const eventUrl = window.location.href;
@@ -143,7 +143,11 @@ export default function EventDetailPage() {
       <div className="max-w-4xl mx-auto">
         {/* Navigation and Share */}
         <div className="flex justify-between items-center mb-6">
-          <Button variant="ghost" onClick={() => router.back()}>
+          <Button
+            variant="ghost"
+            className="pl-0"
+            onClick={() => router.back()}
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Events
           </Button>

@@ -2,13 +2,13 @@ import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import EventPageClient from "./client";
 
-interface EventPageProps {
-  params: {
-    eventId: string;
-  };
-}
+export default async function EventPage({
+  params,
+}: {
+  params: Promise<{ eventId: string }>;
+}) {
+  const eventId = (await params).eventId;
 
-export default async function EventPage({ params }: EventPageProps) {
   return (
     <Suspense
       fallback={
@@ -17,7 +17,7 @@ export default async function EventPage({ params }: EventPageProps) {
         </div>
       }
     >
-      <EventPageClient eventId={params.eventId} />
+      <EventPageClient eventId={eventId} />
     </Suspense>
   );
 }
