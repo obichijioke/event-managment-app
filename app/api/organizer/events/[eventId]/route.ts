@@ -69,7 +69,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -86,7 +86,7 @@ export async function PATCH(
     // Parse and validate the request body
     const json = await request.json();
     const validatedData = eventUpdateSchema.parse(json);
-    const eventId = await params.eventId;
+    const eventId = (await params).eventId;
 
     // Update the event
     const { data: event, error } = await supabase
@@ -127,4 +127,23 @@ export async function PATCH(
     console.error("Error in PATCH /api/organizer/events/[eventId]:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ eventId: string }> }
+) {
+  const eventId = (await params).eventId;
+  const supabase = await createClient();
+  const { data: error } = await supabase
+    .from("events")
+    .delete()
+    .eq("id", eventId);
+
+  if (error) {
+    console.error("Error deleting event:", error);
+    return new NextResponse("Failed to delete event", { status: 500 });
+  }
+
+  return new NextResponse("Event deleted", { status: 200 });
 }
