@@ -33,7 +33,7 @@ export function EventCard({ event }: EventCardProps) {
       <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
         <div className="relative aspect-video">
           <Image
-            src={event.image_url || "/event-placeholder.jpg"}
+            src={event.cover_image_url || "/event-placeholder.jpg"}
             alt={event.name}
             fill
             className="object-cover"

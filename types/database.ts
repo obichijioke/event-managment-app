@@ -16,7 +16,8 @@ export type Event = {
   start_time: string;
   end_time: string;
   category: string;
-  image_url: string | null;
+  cover_image_url: string | null;
+  gallery_image_urls: string[] | null;
   is_online: boolean;
   online_url: string | null;
   user_id: string;

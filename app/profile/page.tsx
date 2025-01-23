@@ -285,7 +285,7 @@ export default function ProfilePage() {
                 <div className="relative aspect-[2/1]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={event.image_url || "/event-placeholder.jpg"}
+                    src={event.cover_image_url || "/event-placeholder.jpg"}
                     alt={event.name}
                     className="w-full h-full object-cover"
                   />
