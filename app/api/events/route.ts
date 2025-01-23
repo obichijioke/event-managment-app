@@ -10,24 +10,38 @@ const querySchema = z.object({
     .optional()
     .nullable()
     .transform((val) => val || undefined),
+  category: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val || undefined),
+  date: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val || undefined),
+  location: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val || undefined),
   sortBy: z.enum(["date", "price", "name"]).optional().default("date"),
   sortOrder: z.enum(["asc", "desc"]).optional().default("asc"),
 });
 
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
+  const { searchParams } = new URL(request.url);
+
   try {
-    const supabase = await createClient();
-    const searchParams = Object.fromEntries(request.nextUrl.searchParams);
+    const query = querySchema.parse(Object.fromEntries(searchParams));
 
-    // Validate and parse query parameters
-    const { page, limit, search, sortBy, sortOrder } =
-      querySchema.parse(searchParams);
+    const search = query.search;
+    const category = query.category;
+    const date = query.date;
+    const location = query.location;
 
-    // Calculate offset for pagination
-    const offset = (page - 1) * limit;
-
-    // Build query
-    let query = supabase
+    let queryToRun = supabase
       .from("events")
       .select(
         `
@@ -49,52 +63,58 @@ export async function GET(request: NextRequest) {
       )
       .eq("status", "published");
 
-    // Add search condition if provided
+    // Apply search filter
     if (search) {
-      query = query.ilike("name", `%${search}%`);
+      queryToRun = queryToRun.or(
+        `name.ilike.%${search}%,description.ilike.%${search}%`
+      );
     }
 
-    // Add sorting
-    switch (sortBy) {
-      case "date":
-        query = query.order("start_time", { ascending: sortOrder === "asc" });
-        break;
-      case "name":
-        query = query.order("name", { ascending: sortOrder === "asc" });
-        break;
-      // Remove price sorting since it's now based on tickets
+    // Apply category filter
+    if (category) {
+      queryToRun = queryToRun.eq("category", category);
     }
 
-    // Add pagination
-    query = query.range(offset, offset + limit - 1);
+    // Apply date filter
+    if (date) {
+      const [startDate, endDate] = date.split(":");
+      if (endDate) {
+        // Date range
+        queryToRun = queryToRun
+          .gte("start_time", `${startDate}T00:00:00Z`)
+          .lte("start_time", `${endDate}T23:59:59Z`);
+      } else {
+        // Single date
+        queryToRun = queryToRun
+          .gte("start_time", `${date}T00:00:00Z`)
+          .lte("start_time", `${date}T23:59:59Z`);
+      }
+    }
 
-    // Execute query
-    const { data: events, error, count } = await query;
+    // Apply location filter
+    if (location) {
+      queryToRun = queryToRun.eq("venues.city", location);
+    }
+
+    // Order by start time
+    queryToRun = queryToRun.order("start_time", { ascending: true });
+
+    const { data: events, error } = await queryToRun;
 
     if (error) {
       console.error("Error fetching events:", error);
-      return new NextResponse("Failed to fetch events", { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to fetch events" },
+        { status: 500 }
+      );
     }
 
-    // Calculate pagination metadata
-    const totalPages = count ? Math.ceil(count / limit) : 0;
-    const hasMore = page < totalPages;
-
-    return NextResponse.json({
-      events,
-      metadata: {
-        currentPage: page,
-        totalPages,
-        totalCount: count,
-        hasMore,
-      },
-    });
+    return NextResponse.json({ events });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return new NextResponse(JSON.stringify(error.errors), { status: 400 });
-    }
-
-    console.error("Error in GET /api/events:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    console.error("Error processing request:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

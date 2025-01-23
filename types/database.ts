@@ -1,3 +1,13 @@
+export type Profile = {
+  id: string;
+  name: string | null;
+  email: string;
+  phone: string | null;
+  role: "user" | "organizer" | "admin";
+  created_at: string;
+  updated_at: string;
+};
+
 export type Event = {
   id: string;
   name: string;
@@ -39,6 +49,11 @@ export type Event = {
 export type Database = {
   public: {
     tables: {
+      profiles: {
+        Row: Profile;
+        Insert: Omit<Profile, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Profile, "id" | "created_at" | "updated_at">>;
+      };
       events: {
         Row: Event;
         Insert: Omit<
