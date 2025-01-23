@@ -99,7 +99,7 @@ export function Navbar() {
                     variant="ghost"
                     className="relative h-8 w-8 rounded-full"
                   >
-                    <Avatar>
+                    <Avatar className="h-8 w-8">
                       <AvatarImage
                         src={`https://api.dicebear.com/7.x/initials/svg?seed=${
                           session.user.email || ""
