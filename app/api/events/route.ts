@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase/client";
-import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+import * as z from "zod";
 
 const querySchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -16,56 +16,64 @@ const querySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    // Parse and validate query parameters
-    const { searchParams } = new URL(request.url);
-    const validatedQuery = querySchema.parse({
-      page: searchParams.get("page"),
-      limit: searchParams.get("limit"),
-      search: searchParams.get("search"),
-      sortBy: searchParams.get("sortBy"),
-      sortOrder: searchParams.get("sortOrder"),
-    });
+    const supabase = await createClient();
+    const searchParams = Object.fromEntries(request.nextUrl.searchParams);
 
-    const { page, limit, search, sortBy, sortOrder } = validatedQuery;
+    // Validate and parse query parameters
+    const { page, limit, search, sortBy, sortOrder } =
+      querySchema.parse(searchParams);
+
+    // Calculate offset for pagination
     const offset = (page - 1) * limit;
 
-    // Create base query
+    // Build query
     let query = supabase
       .from("events")
-      .select("*", { count: "exact" })
+      .select(
+        `
+        *,
+        venue:venues (
+          id,
+          name,
+          address,
+          city,
+          state,
+          postal_code
+        ),
+        tickets (
+          id,
+          price
+        )
+      `,
+        { count: "exact" }
+      )
       .eq("status", "published");
 
-    // Apply sorting
+    // Add search condition if provided
+    if (search) {
+      query = query.ilike("name", `%${search}%`);
+    }
+
+    // Add sorting
     switch (sortBy) {
       case "date":
         query = query.order("start_time", { ascending: sortOrder === "asc" });
         break;
-      case "price":
-        query = query.order("price", { ascending: sortOrder === "asc" });
-        break;
       case "name":
         query = query.order("name", { ascending: sortOrder === "asc" });
         break;
+      // Remove price sorting since it's now based on tickets
     }
 
+    // Add pagination
     query = query.range(offset, offset + limit - 1);
-
-    // Add search functionality if search parameter is provided
-    if (search) {
-      query = query.or(
-        `name.ilike.%${search}%,description.ilike.%${search}%,location.ilike.%${search}%`
-      );
-    }
 
     // Execute query
     const { data: events, error, count } = await query;
 
     if (error) {
       console.error("Error fetching events:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch events" },
-        { status: 500 }
-      );
+      return new NextResponse("Failed to fetch events", { status: 500 });
     }
 
     // Calculate pagination metadata
@@ -82,16 +90,11 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error processing request:", error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid query parameters", details: error.errors },
-        { status: 400 }
-      );
+      return new NextResponse(JSON.stringify(error.errors), { status: 400 });
     }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+
+    console.error("Error in GET /api/events:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

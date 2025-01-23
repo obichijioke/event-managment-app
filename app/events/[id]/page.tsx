@@ -107,6 +107,16 @@ export default function EventDetailPage() {
     }
   };
 
+  const getLocationDisplay = () => {
+    if (event?.is_online) {
+      return "Online Event";
+    }
+    if (event?.venue) {
+      return `${event.venue.name}, ${event.venue.address}, ${event.venue.city}, ${event.venue.state} ${event.venue.postal_code}`;
+    }
+    return "TBA";
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -200,7 +210,7 @@ export default function EventDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="h-5 w-5" />
-              <span>{event.location}</span>
+              <span>{getLocationDisplay()}</span>
             </div>
             {event.organizer && (
               <div className="flex items-center gap-2">
@@ -230,27 +240,29 @@ export default function EventDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Map Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Location</CardTitle>
-                <CardDescription>{event.location}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] rounded-md overflow-hidden">
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    frameBorder="0"
-                    style={{ border: 0 }}
-                    src={`https://www.google.com/maps/embed/v1/place?key=${
-                      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-                    }&q=${encodeURIComponent(event.location)}`}
-                    allowFullScreen
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            {/* Map Card - Only show if it's not an online event */}
+            {!event.is_online && event.venue && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Location</CardTitle>
+                  <CardDescription>{getLocationDisplay()}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] rounded-md overflow-hidden">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      style={{ border: 0 }}
+                      src={`https://www.google.com/maps/embed/v1/place?key=${
+                        process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+                      }&q=${encodeURIComponent(getLocationDisplay())}`}
+                      allowFullScreen
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Ticket Information */}
@@ -262,15 +274,26 @@ export default function EventDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold">General Admission</p>
-                      <p className="text-sm text-gray-500">
-                        ${event.price.toFixed(2)}
-                      </p>
-                    </div>
-                    <Button>Get Tickets</Button>
-                  </div>
+                  {event.tickets && event.tickets.length > 0 ? (
+                    event.tickets.map((ticket) => (
+                      <div
+                        key={ticket.id}
+                        className="flex justify-between items-center"
+                      >
+                        <div>
+                          <p className="font-semibold">{ticket.name}</p>
+                          <p className="text-sm text-gray-500">
+                            ${ticket.price.toFixed(2)}
+                          </p>
+                        </div>
+                        <Button>Get Tickets</Button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-500">
+                      No tickets available yet
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -291,17 +314,24 @@ export default function EventDetailPage() {
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">Location</h3>
-                  <p className="text-sm text-gray-600">{event.location}</p>
+                  <h3 className="font-semibold mb-1">
+                    {event.is_online ? "Online Event" : "Location"}
+                  </h3>
+                  {event.is_online ? (
+                    <p className="text-sm text-gray-600">
+                      {event.online_url || "Link will be provided"}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-600">
+                      {getLocationDisplay()}
+                    </p>
+                  )}
                 </div>
                 {event.organizer && (
                   <div>
                     <h3 className="font-semibold mb-1">Organizer</h3>
                     <p className="text-sm text-gray-600">
                       {event.organizer.name}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {event.organizer.email}
                     </p>
                   </div>
                 )}

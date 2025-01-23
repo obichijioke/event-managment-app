@@ -6,6 +6,8 @@ export const supabase = createBrowserClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+export const createClient = () => supabase;
+
 export async function signInWithEmail(email: string, password: string) {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({

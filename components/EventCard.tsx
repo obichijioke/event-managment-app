@@ -12,6 +12,22 @@ interface EventCardProps {
 }
 
 export function EventCard({ event }: EventCardProps) {
+  const getTicketPriceDisplay = () => {
+    if (!event.tickets || event.tickets.length === 0) {
+      return "Free";
+    }
+
+    const prices = event.tickets.map((ticket) => ticket.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    if (minPrice === maxPrice) {
+      return `$${minPrice.toFixed(2)}`;
+    }
+
+    return `From $${minPrice.toFixed(2)}`;
+  };
+
   return (
     <Link href={`/events/${event.id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
@@ -43,10 +59,12 @@ export function EventCard({ event }: EventCardProps) {
             </div>
             <div className="flex items-center gap-2">
               <MapPinIcon className="h-4 w-4" />
-              <span className="line-clamp-1">{event.location}</span>
+              <span className="line-clamp-1">
+                {event.is_online ? "Online Event" : event.venue?.name || "TBA"}
+              </span>
             </div>
             <div className="mt-2 text-base font-semibold text-primary">
-              ${event.price.toFixed(2)}
+              {getTicketPriceDisplay()}
             </div>
           </div>
         </CardContent>

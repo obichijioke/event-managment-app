@@ -47,10 +47,10 @@ export async function middleware(request: NextRequest) {
 
     // If accessing organizer routes, verify role
     if (request.nextUrl.pathname.startsWith("/organizer")) {
-      console.log("Checking organizer access");
+      //console.log("Checking organizer access");
 
       if (!session?.user) {
-        console.log("No session or user, redirecting to login");
+        //console.log("No session or user, redirecting to login");
         const redirectUrl = new URL("/login", request.url);
         redirectUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
         return NextResponse.redirect(redirectUrl);
@@ -62,20 +62,20 @@ export async function middleware(request: NextRequest) {
         .eq("id", session.user.id)
         .single();
 
-      console.log("Profile check:", {
-        hasProfile: !!profile,
-        role: profile?.role,
-        error: profileError?.message,
-        userId: session.user.id,
-      });
+      //console.log("Profile check:", {
+      //  hasProfile: !!profile,
+      //  role: profile?.role,
+      //  error: profileError?.message,
+      //  userId: session.user.id,
+      //});
 
       if (profileError) {
-        console.error("Profile fetch error:", profileError);
+        //console.error("Profile fetch error:", profileError);
         return NextResponse.redirect(new URL("/login", request.url));
       }
 
       if (!profile || profile.role !== "organizer") {
-        console.log("Not an organizer, redirecting to home");
+        //console.log("Not an organizer, redirecting to home");
         return NextResponse.redirect(new URL("/", request.url));
       }
     }

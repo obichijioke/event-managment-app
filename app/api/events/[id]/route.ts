@@ -1,23 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const supabase = await createClient();
+    const id = (await params).id;
 
-    // Fetch event details from Supabase
+    // Fetch event details from Supabase with tickets, organizer, and venue
     const { data: event, error } = await supabase
       .from("events")
       .select(
         `
         *,
-        organizer:user_id (
+        tickets (
+          id,
+          name,
+          description,
+          price,
+          quantity_available,
+          sale_start_time,
+          sale_end_time
+        ),
+        organizer:profiles!user_id (
           id,
           name,
           email
+        ),
+        venue:venues (
+          id,
+          name,
+          address,
+          city,
+          state,
+          postal_code
         )
       `
       )

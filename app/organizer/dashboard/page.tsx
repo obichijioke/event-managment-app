@@ -29,8 +29,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
+type Ticket = {
+  id: string;
+  price: number;
+};
+
+type EventWithTickets = Event & {
+  tickets?: Ticket[];
+};
+
 export default function OrganizerDashboard() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventWithTickets[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -41,7 +50,22 @@ export default function OrganizerDashboard() {
         const response = await fetch("/api/organizer/events");
         if (!response.ok) throw new Error("Failed to fetch events");
         const data = await response.json();
-        setEvents(data.events);
+
+        // Fetch tickets for each event
+        const eventsWithTickets = await Promise.all(
+          data.events.map(async (event: Event) => {
+            const ticketsResponse = await fetch(
+              `/api/organizer/events/${event.id}/tickets`
+            );
+            if (ticketsResponse.ok) {
+              const { tickets } = await ticketsResponse.json();
+              return { ...event, tickets };
+            }
+            return { ...event, tickets: [] };
+          })
+        );
+
+        setEvents(eventsWithTickets);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Something went wrong");
       } finally {
@@ -52,12 +76,28 @@ export default function OrganizerDashboard() {
     fetchOrganizerEvents();
   }, []);
 
+  const getTicketPriceDisplay = (event: EventWithTickets) => {
+    if (!event.tickets || event.tickets.length === 0) {
+      return "No tickets";
+    }
+
+    const prices = event.tickets.map((ticket) => ticket.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    if (minPrice === maxPrice) {
+      return `$${minPrice.toFixed(2)}`;
+    }
+
+    return `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`;
+  };
+
   const handleStatusChange = async (
     eventId: string,
     newStatus: "draft" | "published" | "cancelled"
   ) => {
     try {
-      const response = await fetch(`/api/events/${eventId}`, {
+      const response = await fetch(`/api/organizer/events/${eventId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -82,7 +122,7 @@ export default function OrganizerDashboard() {
     if (!confirm("Are you sure you want to delete this event?")) return;
 
     try {
-      const response = await fetch(`/api/events/${eventId}`, {
+      const response = await fetch(`/api/organizer/events/${eventId}`, {
         method: "DELETE",
       });
 
@@ -178,7 +218,7 @@ export default function OrganizerDashboard() {
                     <TableHead>Event Name</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Price</TableHead>
+                    <TableHead>Ticket Prices</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -204,7 +244,7 @@ export default function OrganizerDashboard() {
                           {event.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>${event.price.toFixed(2)}</TableCell>
+                      <TableCell>{getTicketPriceDisplay(event)}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -215,9 +255,7 @@ export default function OrganizerDashboard() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={() =>
-                                router.push(
-                                  `/organizer/events/${event.id}/edit`
-                                )
+                                router.push(`/organizer/events/${event.id}`)
                               }
                             >
                               Edit Event

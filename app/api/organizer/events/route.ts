@@ -1,29 +1,23 @@
 import { NextResponse } from "next/server";
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+
+const eventSchema = z.object({
+  name: z.string().min(1, "Event name is required"),
+  description: z.string().min(1, "Description is required"),
+  venue_id: z.string().min(1, "Venue is required"),
+  start_time: z.string().min(1, "Start time is required"),
+  end_time: z.string().min(1, "End time is required"),
+  category: z.string().min(1, "Category is required"),
+  image_url: z.string().optional(),
+  is_online: z.boolean().default(false),
+  online_url: z.string().optional(),
+});
 
 export async function GET() {
+  const supabase = await createClient();
+
   try {
-    const cookieStore = await cookies();
-
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set(name, value, options);
-          },
-          remove(name: string, options: CookieOptions) {
-            cookieStore.set(name, "", { ...options, maxAge: 0 });
-          },
-        },
-      }
-    );
-
     const {
       data: { user },
       error: userError,
@@ -38,11 +32,10 @@ export async function GET() {
       .select(
         `
         *,
-        profile:profiles(
+        organizer:profiles!user_id (
           id,
-          first_name,
-          last_name,
-          email
+          email,
+          name
         )
       `
       )
@@ -60,6 +53,63 @@ export async function GET() {
     return NextResponse.json({ events });
   } catch (error) {
     console.error("Error processing request:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  const supabase = await createClient();
+
+  try {
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const json = await request.json();
+
+    // Validate the request body
+    const validatedData = eventSchema.parse(json);
+
+    // Prepare event data
+    const eventData = {
+      ...validatedData,
+      user_id: user.id,
+      organizer_id: user.id,
+      status: "draft",
+    };
+
+    // Insert the event
+    const { data: event, error } = await supabase
+      .from("events")
+      .insert([eventData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error creating event:", error);
+      return NextResponse.json(
+        { error: "Failed to create event" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(event);
+  } catch (error) {
+    console.error("Error processing request:", error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Invalid request data", details: error.errors },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

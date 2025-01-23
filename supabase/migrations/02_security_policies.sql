@@ -38,18 +38,18 @@ CREATE POLICY "Organizers can create venues"
     ON venues FOR INSERT
     TO authenticated
     WITH CHECK (EXISTS (
-        SELECT 1 FROM users
-        WHERE users.id = auth.uid()
-        AND users.role = 'organizer'
+        SELECT 1 FROM profiles
+        WHERE profiles.id = auth.uid()
+        AND profiles.role = 'organizer'
     ));
 
 CREATE POLICY "Organizers can update venues"
     ON venues FOR UPDATE
     TO authenticated
     USING (EXISTS (
-        SELECT 1 FROM users
-        WHERE users.id = auth.uid()
-        AND users.role = 'organizer'
+        SELECT 1 FROM profiles
+        WHERE profiles.id = auth.uid()
+        AND profiles.role = 'organizer'
     ));
 
 -- Events policies
