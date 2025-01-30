@@ -113,7 +113,7 @@ export default function EventPageClient({ eventId }: EventPageClientProps) {
           start_time: new Date(data.start_time),
           end_time: new Date(data.end_time),
           is_online: data.is_online,
-          online_url: data.online_url,
+          online_url: data.online_url || "",
           cover_image_url: data.cover_image_url || "",
           gallery_image_urls: data.gallery_image_urls || [],
         });

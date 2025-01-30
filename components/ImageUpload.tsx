@@ -27,7 +27,7 @@ export function ImageUpload({
   folder = "uploads",
   maxImages = 10,
 }: ImageUploadProps) {
-  const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [previews, setPreviews] = useState<string[]>(
     multiple ? defaultImages || [] : defaultImage ? [defaultImage] : []
   );
@@ -39,7 +39,7 @@ export function ImageUpload({
       if (!files?.length) return;
 
       try {
-        setIsUploading(true);
+        setIsLoading(true);
 
         // Convert FileList to array and limit to maxImages if multiple
         const fileArray = Array.from(files);
@@ -72,7 +72,7 @@ export function ImageUpload({
       } catch (error) {
         console.error("Error uploading image(s):", error);
       } finally {
-        setIsUploading(false);
+        setIsLoading(false);
       }
     },
     [bucket, folder, multiple, maxImages, previews, imagePaths, onUpload]
@@ -80,11 +80,14 @@ export function ImageUpload({
 
   const handleDelete = useCallback(
     async (index: number) => {
-      if (!imagePaths[index]) return;
-
       try {
-        setIsUploading(true);
-        await deleteImage(imagePaths[index], bucket);
+        setIsLoading(true);
+        const imageToDelete = previews[index];
+
+        // If we have a path for this image, delete it from storage
+        if (imagePaths[index]) {
+          await deleteImage(imagePaths[index], bucket);
+        }
 
         const newPreviews = previews.filter((_, i) => i !== index);
         const newPaths = imagePaths.filter((_, i) => i !== index);
@@ -93,14 +96,14 @@ export function ImageUpload({
         setImagePaths(newPaths);
 
         if (multiple) {
-          onDelete?.(previews[index]);
+          onDelete?.(imageToDelete);
         } else {
           onDelete?.();
         }
       } catch (error) {
         console.error("Error deleting image:", error);
       } finally {
-        setIsUploading(false);
+        setIsLoading(false);
       }
     },
     [bucket, imagePaths, previews, multiple, onDelete]
@@ -114,9 +117,9 @@ export function ImageUpload({
             type="file"
             accept="image/*"
             onChange={handleUpload}
-            disabled={isUploading || (multiple && previews.length >= maxImages)}
+            disabled={isLoading || (multiple && previews.length >= maxImages)}
             multiple={multiple}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed disabled:opacity-0"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed"
           />
           <Button
             type="button"
@@ -127,10 +130,10 @@ export function ImageUpload({
                 previews.length >= maxImages &&
                 "opacity-50 cursor-not-allowed"
             )}
-            disabled={isUploading || (multiple && previews.length >= maxImages)}
+            disabled={isLoading || (multiple && previews.length >= maxImages)}
           >
             <ImagePlus className="h-4 w-4" />
-            {isUploading
+            {isLoading
               ? "Uploading..."
               : multiple
               ? previews.length >= maxImages
@@ -139,7 +142,7 @@ export function ImageUpload({
               : "Add Image"}
           </Button>
         </div>
-        {isUploading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
       </div>
 
       {multiple && (
@@ -181,7 +184,7 @@ export function ImageUpload({
                 size="icon"
                 className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={() => handleDelete(index)}
-                disabled={isUploading}
+                disabled={isLoading}
               >
                 <X className="h-4 w-4" />
               </Button>
