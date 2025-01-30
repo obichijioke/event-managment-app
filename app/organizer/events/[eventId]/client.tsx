@@ -42,7 +42,7 @@ const eventFormSchema = z.object({
     required_error: "End time is required",
   }),
   category_id: z.string().min(1, "Category is required"),
-  image_url: z.string().optional(),
+  cover_image_url: z.string().optional(),
   gallery_image_urls: z.array(z.string()).optional(),
   is_online: z.boolean().default(false),
   online_url: z.string().optional(),
@@ -58,7 +58,7 @@ interface Event {
   start_time: string;
   end_time: string;
   category_id: string;
-  image_url?: string;
+  cover_image_url?: string;
   gallery_image_urls?: string[];
   is_online: boolean;
   online_url?: string;
@@ -114,8 +114,8 @@ export default function EventPageClient({ eventId }: EventPageClientProps) {
           end_time: new Date(data.end_time),
           is_online: data.is_online,
           online_url: data.online_url,
-          image_url: data.image_url,
-          gallery_image_urls: data.gallery_image_urls,
+          cover_image_url: data.cover_image_url || "",
+          gallery_image_urls: data.gallery_image_urls || [],
         });
       } catch (error) {
         console.error("Error fetching event:", error);
@@ -131,12 +131,19 @@ export default function EventPageClient({ eventId }: EventPageClientProps) {
     try {
       setIsLoading(true);
 
+      // Convert dates to ISO strings for API
+      const formData = {
+        ...data,
+        start_time: data.start_time.toISOString(),
+        end_time: data.end_time.toISOString(),
+      };
+
       const response = await fetch(`/api/organizer/events/${eventId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
@@ -430,13 +437,13 @@ export default function EventPageClient({ eventId }: EventPageClientProps) {
 
               <FormField
                 control={form.control}
-                name="image_url"
+                name="cover_image_url"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Cover Image</FormLabel>
                     <FormControl>
                       <ImageUpload
-                        onUpload={(url) => field.onChange(url)}
+                        onUpload={(url) => field.onChange(url as string)}
                         onDelete={() => field.onChange("")}
                         defaultImage={field.value}
                         bucket="cover-image"
@@ -461,7 +468,7 @@ export default function EventPageClient({ eventId }: EventPageClientProps) {
                       <ImageUpload
                         multiple
                         maxImages={5}
-                        onUpload={(urls) => field.onChange(urls)}
+                        onUpload={(urls) => field.onChange(urls as string[])}
                         onDelete={(url) => {
                           const newUrls =
                             field.value?.filter((u) => u !== url) || [];

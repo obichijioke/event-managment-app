@@ -119,6 +119,7 @@ export function ImageUpload({
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 disabled:cursor-not-allowed disabled:opacity-0"
           />
           <Button
+            type="button"
             variant="outline"
             className={cn(
               "relative w-full flex items-center gap-2",
@@ -175,6 +176,7 @@ export function ImageUpload({
                 className="object-cover transition-transform group-hover:scale-105"
               />
               <Button
+                type="button"
                 variant="destructive"
                 size="icon"
                 className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"

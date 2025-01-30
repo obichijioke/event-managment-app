@@ -79,12 +79,20 @@ export default function NewEventPage() {
   async function onSubmit(data: EventFormValues) {
     try {
       setIsLoading(true);
+
+      // Convert dates to ISO strings for API
+      const formData = {
+        ...data,
+        start_time: data.start_time.toISOString(),
+        end_time: data.end_time.toISOString(),
+      };
+
       const response = await fetch("/api/organizer/events", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
@@ -300,7 +308,7 @@ export default function NewEventPage() {
                   <FormLabel>Cover Image</FormLabel>
                   <FormControl>
                     <ImageUpload
-                      onUpload={(url) => field.onChange(url)}
+                      onUpload={(url) => field.onChange(url as string)}
                       onDelete={() => field.onChange("")}
                       defaultImage={field.value}
                       bucket="cover-image"
@@ -325,7 +333,7 @@ export default function NewEventPage() {
                     <ImageUpload
                       multiple
                       maxImages={5}
-                      onUpload={(urls) => field.onChange(urls)}
+                      onUpload={(urls) => field.onChange(urls as string[])}
                       onDelete={(url) => {
                         const newUrls =
                           field.value?.filter((u) => u !== url) || [];

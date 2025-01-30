@@ -9,7 +9,7 @@ const updateEventSchema = z.object({
   start_time: z.string().min(1, "Start time is required").optional(),
   end_time: z.string().min(1, "End time is required").optional(),
   category_id: z.string().min(1, "Category is required").optional(),
-  image_url: z.string().optional(),
+  cover_image_url: z.string().optional(),
   gallery_image_urls: z.array(z.string()).optional(),
   is_online: z.boolean().optional(),
   online_url: z.string().optional(),
