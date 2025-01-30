@@ -2,10 +2,11 @@
 
 import { Event } from "@/types/database";
 import { Card, CardContent } from "@/components/ui/card";
-import { CalendarIcon, MapPinIcon, Clock } from "lucide-react";
+import { CalendarIcon, MapPinIcon, Clock, Tag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 interface EventCardProps {
   event: Event;
@@ -38,6 +39,14 @@ export function EventCard({ event }: EventCardProps) {
             fill
             className="object-cover"
           />
+          {event.category && (
+            <div className="absolute top-2 right-2">
+              <Badge variant="secondary" className="bg-white/90">
+                <Tag className="h-3 w-3 mr-1" />
+                {event.category.name}
+              </Badge>
+            </div>
+          )}
         </div>
         <CardContent className="p-4">
           <h3 className="text-xl font-semibold line-clamp-1 mb-2">

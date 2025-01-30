@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Loader2, Plus, Edit2 } from "lucide-react";
+import { Loader2, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -26,9 +25,11 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { VenueSelector } from "@/components/VenueSelector";
+import { CategorySelect } from "@/components/CategorySelect";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ImageUpload } from "@/components/ImageUpload";
 
 const eventFormSchema = z.object({
   name: z.string().min(1, "Event name is required"),
@@ -40,47 +41,43 @@ const eventFormSchema = z.object({
   end_time: z.date({
     required_error: "End time is required",
   }),
-  category: z.string().min(1, "Category is required"),
+  category_id: z.string().min(1, "Category is required"),
   image_url: z.string().optional(),
+  gallery_image_urls: z.array(z.string()).optional(),
   is_online: z.boolean().default(false),
   online_url: z.string().optional(),
 });
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
 
-type Venue = {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  postal_code: string;
-};
-
-type Ticket = {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  quantity_available: number;
-  sale_start_time: string | null;
-  sale_end_time: string | null;
-};
-
-type Event = {
+interface Event {
   id: string;
   name: string;
   description: string;
   venue_id: string;
   start_time: string;
   end_time: string;
-  category: string;
-  image_url: string | null;
+  category_id: string;
+  image_url?: string;
+  gallery_image_urls?: string[];
   is_online: boolean;
-  online_url: string | null;
+  online_url?: string;
   status: "draft" | "published" | "cancelled";
-  venue: Venue;
-};
+  venue?: {
+    id: string;
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    postal_code: string;
+  };
+  category?: {
+    id: string;
+    name: string;
+    description: string;
+    slug: string;
+  };
+}
 
 interface EventPageClientProps {
   eventId: string;
@@ -88,54 +85,46 @@ interface EventPageClientProps {
 
 export default function EventPageClient({ eventId }: EventPageClientProps) {
   const [event, setEvent] = useState<Event | null>(null);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
-  const router = useRouter();
+  const [selectedVenue, setSelectedVenue] = useState<Event["venue"] | null>(
+    null
+  );
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
   });
 
   useEffect(() => {
-    async function fetchEventAndTickets() {
+    async function fetchEvent() {
       try {
-        // Fetch event details
-        const eventResponse = await fetch(`/api/organizer/events/${eventId}`);
-        if (!eventResponse.ok) throw new Error("Failed to fetch event");
-        const eventData = await eventResponse.json();
-        setEvent(eventData);
-        setSelectedVenue(eventData.venue);
+        const response = await fetch(`/api/organizer/events/${eventId}`);
+        if (!response.ok) throw new Error("Failed to fetch event");
+        const data = await response.json();
+        setEvent(data);
+        setSelectedVenue(data.venue);
 
         // Set form default values
         form.reset({
-          name: eventData.name,
-          description: eventData.description,
-          venue_id: eventData.venue_id,
-          start_time: new Date(eventData.start_time),
-          end_time: new Date(eventData.end_time),
-          category: eventData.category,
-          image_url: eventData.image_url || "",
-          is_online: eventData.is_online,
-          online_url: eventData.online_url || "",
+          name: data.name,
+          description: data.description,
+          venue_id: data.venue_id,
+          category_id: data.category_id,
+          start_time: new Date(data.start_time),
+          end_time: new Date(data.end_time),
+          is_online: data.is_online,
+          online_url: data.online_url,
+          image_url: data.image_url,
+          gallery_image_urls: data.gallery_image_urls,
         });
-
-        // Fetch tickets
-        const ticketsResponse = await fetch(
-          `/api/organizer/events/${eventId}/tickets`
-        );
-        if (!ticketsResponse.ok) throw new Error("Failed to fetch tickets");
-        const { tickets } = await ticketsResponse.json();
-        setTickets(tickets);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching event:", error);
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchEventAndTickets();
+    fetchEvent();
   }, [eventId, form]);
 
   async function onSubmit(data: EventFormValues) {
@@ -288,12 +277,15 @@ export default function EventPageClient({ eventId }: EventPageClientProps) {
 
               <FormField
                 control={form.control}
-                name="category"
+                name="category_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter event category" {...field} />
+                      <CategorySelect
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -436,6 +428,58 @@ export default function EventPageClient({ eventId }: EventPageClientProps) {
                 />
               )}
 
+              <FormField
+                control={form.control}
+                name="image_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cover Image</FormLabel>
+                    <FormControl>
+                      <ImageUpload
+                        onUpload={(url) => field.onChange(url)}
+                        onDelete={() => field.onChange("")}
+                        defaultImage={field.value}
+                        bucket="cover-image"
+                        folder="covers"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Upload a cover image for your event
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="gallery_image_urls"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gallery Images</FormLabel>
+                    <FormControl>
+                      <ImageUpload
+                        multiple
+                        maxImages={5}
+                        onUpload={(urls) => field.onChange(urls)}
+                        onDelete={(url) => {
+                          const newUrls =
+                            field.value?.filter((u) => u !== url) || [];
+                          field.onChange(newUrls);
+                        }}
+                        defaultImages={field.value}
+                        bucket="gallery"
+                        folder="gallery-images"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Add up to 5 images to showcase your event
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
@@ -461,7 +505,7 @@ export default function EventPageClient({ eventId }: EventPageClientProps) {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Category</h3>
-                  <p className="text-gray-600">{event.category}</p>
+                  <p className="text-gray-600">{event.category?.name}</p>
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">Date and Time</h3>
@@ -476,7 +520,7 @@ export default function EventPageClient({ eventId }: EventPageClientProps) {
                     <h3 className="font-semibold mb-1">Online Event URL</h3>
                     <p className="text-gray-600">{event.online_url}</p>
                   </div>
-                ) : (
+                ) : event.venue ? (
                   <div>
                     <h3 className="font-semibold mb-1">Venue</h3>
                     <p className="text-gray-600">
@@ -488,55 +532,7 @@ export default function EventPageClient({ eventId }: EventPageClientProps) {
                       {event.venue.postal_code}
                     </p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Tickets</CardTitle>
-                  <Button onClick={() => router.push(`${eventId}/tickets/new`)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Ticket Type
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {tickets.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">
-                      No tickets created yet
-                    </p>
-                  ) : (
-                    tickets.map((ticket) => (
-                      <div
-                        key={ticket.id}
-                        className="flex justify-between items-center p-4 border rounded-lg"
-                      >
-                        <div>
-                          <h4 className="font-semibold">{ticket.name}</h4>
-                          <p className="text-sm text-gray-500">
-                            {ticket.description}
-                          </p>
-                          <p className="text-sm font-medium mt-1">
-                            ${ticket.price.toFixed(2)} ·{" "}
-                            {ticket.quantity_available} available
-                          </p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() =>
-                            router.push(`${eventId}/tickets/${ticket.id}/edit`)
-                          }
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))
-                  )}
-                </div>
+                ) : null}
               </CardContent>
             </Card>
           </div>

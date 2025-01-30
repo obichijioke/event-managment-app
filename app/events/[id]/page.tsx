@@ -13,6 +13,7 @@ import {
   Facebook,
   Twitter,
   Link as LinkIcon,
+  Tag,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 export default function EventDetailPage() {
   const [event, setEvent] = useState<Event | null>(null);
@@ -145,7 +147,7 @@ export default function EventDetailPage() {
         <div className="flex justify-between items-center mb-6">
           <Button
             variant="ghost"
-            className="pl-0"
+            className="px-2"
             onClick={() => router.back()}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -198,6 +200,14 @@ export default function EventDetailPage() {
         {/* Event Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4">{event.name}</h1>
+          {event.category && (
+            <div className="mb-4">
+              <Badge variant="secondary">
+                <Tag className="h-4 w-4 mr-2" />
+                {event.category.name}
+              </Badge>
+            </div>
+          )}
           <div className="flex flex-wrap gap-4 text-gray-600">
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />

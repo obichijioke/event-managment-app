@@ -6,8 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Loader2, X } from "lucide-react";
-import Image from "next/image";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -29,6 +28,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { VenueSelector } from "@/components/VenueSelector";
 import { ImageUpload } from "@/components/ImageUpload";
 import { cn } from "@/lib/utils";
+import { CategorySelect } from "@/components/CategorySelect";
 
 const eventFormSchema = z.object({
   name: z.string().min(1, "Event name is required"),
@@ -40,7 +40,7 @@ const eventFormSchema = z.object({
   end_time: z.date({
     required_error: "End time is required",
   }),
-  category: z.string().min(1, "Category is required"),
+  category_id: z.string().min(1, "Category is required"),
   cover_image_url: z.string().optional(),
   gallery_image_urls: z.array(z.string()).optional(),
   is_online: z.boolean().default(false),
@@ -69,7 +69,7 @@ export default function NewEventPage() {
       name: "",
       description: "",
       venue_id: "",
-      category: "",
+      category_id: "",
       is_online: false,
       cover_image_url: "",
       gallery_image_urls: [],
@@ -141,12 +141,15 @@ export default function NewEventPage() {
 
             <FormField
               control={form.control}
-              name="category"
+              name="category_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter event category" {...field} />
+                    <CategorySelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -319,44 +322,22 @@ export default function NewEventPage() {
                 <FormItem>
                   <FormLabel>Gallery Images</FormLabel>
                   <FormControl>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        {field.value?.map((url, index) => (
-                          <div key={url} className="relative aspect-video">
-                            <Image
-                              src={url}
-                              alt={`Gallery image ${index + 1}`}
-                              fill
-                              className="rounded-lg object-cover"
-                            />
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              className="absolute -top-2 -right-2 z-10"
-                              onClick={() => {
-                                const newUrls = field.value?.filter(
-                                  (u) => u !== url
-                                );
-                                field.onChange(newUrls);
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                      <ImageUpload
-                        onUpload={(url) => {
-                          const currentUrls = field.value || [];
-                          field.onChange([...currentUrls, url]);
-                        }}
-                        bucket="gallery"
-                        folder="gallery-images"
-                      />
-                    </div>
+                    <ImageUpload
+                      multiple
+                      maxImages={5}
+                      onUpload={(urls) => field.onChange(urls)}
+                      onDelete={(url) => {
+                        const newUrls =
+                          field.value?.filter((u) => u !== url) || [];
+                        field.onChange(newUrls);
+                      }}
+                      defaultImages={field.value}
+                      bucket="gallery"
+                      folder="gallery-images"
+                    />
                   </FormControl>
                   <FormDescription>
-                    Add additional images to showcase your event
+                    Add up to 5 images to showcase your event
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

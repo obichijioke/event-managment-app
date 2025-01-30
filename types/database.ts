@@ -1,3 +1,12 @@
+export type Category = {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Profile = {
   id: string;
   name: string | null;
@@ -15,7 +24,7 @@ export type Event = {
   venue_id: string;
   start_time: string;
   end_time: string;
-  category: string;
+  category_id: string;
   cover_image_url: string | null;
   gallery_image_urls: string[] | null;
   is_online: boolean;
@@ -36,6 +45,7 @@ export type Event = {
     name: string;
     email: string;
   };
+  category?: Category;
   tickets?: {
     id: string;
     price: number;
@@ -55,14 +65,22 @@ export type Database = {
         Insert: Omit<Profile, "id" | "created_at" | "updated_at">;
         Update: Partial<Omit<Profile, "id" | "created_at" | "updated_at">>;
       };
+      categories: {
+        Row: Category;
+        Insert: Omit<Category, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Category, "id" | "created_at" | "updated_at">>;
+      };
       events: {
         Row: Event;
         Insert: Omit<
           Event,
-          "id" | "created_at" | "organizer" | "venue" | "tickets"
+          "id" | "created_at" | "organizer" | "venue" | "tickets" | "category"
         >;
         Update: Partial<
-          Omit<Event, "id" | "created_at" | "organizer" | "venue" | "tickets">
+          Omit<
+            Event,
+            "id" | "created_at" | "organizer" | "venue" | "tickets" | "category"
+          >
         >;
       };
     };

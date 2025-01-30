@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Event } from "@/types/database";
+import { Event, Category } from "@/types/database";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -17,7 +17,7 @@ import { format, startOfToday, endOfMonth, addMonths } from "date-fns";
 
 type EventFilters = {
   search?: string;
-  category?: string;
+  category_id?: string;
   date?: string;
   location?: string;
 };
@@ -25,17 +25,33 @@ type EventFilters = {
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const [filters, setFilters] = useState<EventFilters>({
     search: searchParams.get("search") || "",
-    category: searchParams.get("category") || "",
+    category_id: searchParams.get("category_id") || "",
     date: searchParams.get("date") || "",
     location: searchParams.get("location") || "",
   });
+
+  // Fetch categories
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const response = await fetch("/api/categories");
+        if (!response.ok) throw new Error("Failed to fetch categories");
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    }
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -51,18 +67,13 @@ export default function EventsPage() {
         const data = await response.json();
         setEvents(data.events);
 
-        // Extract unique categories and locations
-        const uniqueCategories = Array.from(
-          new Set(data.events.map((event: Event) => event.category))
-        ).filter(Boolean) as string[];
-
+        // Extract unique locations
         const uniqueLocations = Array.from(
           new Set(
             data.events.map((event: Event) => event.venue?.city).filter(Boolean)
           )
         ) as string[];
 
-        setCategories(uniqueCategories);
         setLocations(uniqueLocations);
       } catch (error) {
         console.error("Error fetching events:", error);
@@ -131,9 +142,9 @@ export default function EventsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Select
-            value={filters.category}
+            value={filters.category_id}
             onValueChange={(value) =>
-              handleFilterChange("category", value === "all" ? "" : value)
+              handleFilterChange("category_id", value === "all" ? "" : value)
             }
           >
             <SelectTrigger>
@@ -143,8 +154,8 @@ export default function EventsPage() {
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
               {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
                 </SelectItem>
               ))}
             </SelectContent>

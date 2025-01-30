@@ -8,7 +8,7 @@ const eventSchema = z.object({
   venue_id: z.string().min(1, "Venue is required"),
   start_time: z.string().min(1, "Start time is required"),
   end_time: z.string().min(1, "End time is required"),
-  category: z.string().min(1, "Category is required"),
+  category_id: z.string().min(1, "Category is required"),
   cover_image_url: z.string().optional(),
   gallery_image_urls: z.array(z.string()).optional(),
   is_online: z.boolean().default(false),

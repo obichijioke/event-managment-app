@@ -10,7 +10,7 @@ const querySchema = z.object({
     .optional()
     .nullable()
     .transform((val) => val || undefined),
-  category: z
+  category_id: z
     .string()
     .optional()
     .nullable()
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     const query = querySchema.parse(Object.fromEntries(searchParams));
 
     const search = query.search;
-    const category = query.category;
+    const category_id = query.category_id;
     const date = query.date;
     const location = query.location;
 
@@ -53,6 +53,12 @@ export async function GET(request: NextRequest) {
           city,
           state,
           postal_code
+        ),
+        category:categories (
+          id,
+          name,
+          description,
+          slug
         ),
         tickets (
           id,
@@ -71,8 +77,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply category filter
-    if (category) {
-      queryToRun = queryToRun.eq("category", category);
+    if (category_id) {
+      queryToRun = queryToRun.eq("category_id", category_id);
     }
 
     // Apply date filter
