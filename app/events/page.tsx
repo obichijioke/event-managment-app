@@ -140,7 +140,7 @@ export default function EventsPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <Select
             value={filters.category_id}
             onValueChange={(value) =>
@@ -208,7 +208,7 @@ export default function EventsPage() {
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : events.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {events.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}

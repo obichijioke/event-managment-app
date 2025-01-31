@@ -399,10 +399,14 @@ export default function EventDetailPage() {
                         <div>
                           <p className="font-semibold">{ticket.name}</p>
                           <p className="text-sm text-gray-500">
-                            ${ticket.price.toFixed(2)}
+                            {ticket.price === 0
+                              ? "Free"
+                              : `$${ticket.price.toFixed(2)}`}
                           </p>
                         </div>
-                        <Button>Get Tickets</Button>
+                        <Button>
+                          {ticket.price === 0 ? "Register" : "Get Tickets"}
+                        </Button>
                       </div>
                     ))
                   ) : (
@@ -425,7 +429,8 @@ export default function EventDetailPage() {
                     <div className="relative w-16 h-16 rounded-full overflow-hidden bg-muted">
                       <Image
                         src={
-                          event.organizer.avatar_url || "/user-placeholder.png"
+                          event.organizer.avatar_url ||
+                          "/default-profile-photo.jpg"
                         }
                         alt={event.organizer.name || "Organizer"}
                         fill

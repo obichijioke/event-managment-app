@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
@@ -46,7 +47,9 @@ type TicketFormValues = z.infer<typeof ticketFormSchema>;
 
 export function NewTicketForm({ eventId }: { eventId: string }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isFreeTicket, setIsFreeTicket] = useState(false);
   const router = useRouter();
+
   const form = useForm<TicketFormValues>({
     resolver: zodResolver(ticketFormSchema),
     defaultValues: {
@@ -56,6 +59,14 @@ export function NewTicketForm({ eventId }: { eventId: string }) {
       quantity_available: 0,
     },
   });
+
+  // Update price when free ticket checkbox changes
+  const handleFreeTicketChange = (checked: boolean) => {
+    setIsFreeTicket(checked);
+    if (checked) {
+      form.setValue("price", 0);
+    }
+  };
 
   async function onSubmit(data: TicketFormValues) {
     try {
@@ -134,26 +145,51 @@ export function NewTicketForm({ eventId }: { eventId: string }) {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>Set to 0 for free tickets</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="free-ticket"
+                    checked={isFreeTicket}
+                    onCheckedChange={handleFreeTicketChange}
+                  />
+                  <label
+                    htmlFor="free-ticket"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    This is a free ticket
+                  </label>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                          disabled={isFreeTicket}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            setIsFreeTicket(e.target.value === "0");
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {isFreeTicket
+                          ? "This ticket will be free"
+                          : "Set the price for this ticket type"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
@@ -165,7 +201,9 @@ export function NewTicketForm({ eventId }: { eventId: string }) {
                       <Input type="number" min="0" placeholder="0" {...field} />
                     </FormControl>
                     <FormDescription>
-                      Total number of tickets available
+                      {isFreeTicket
+                        ? "Number of free tickets available"
+                        : "Total number of tickets available for sale"}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

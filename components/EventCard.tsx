@@ -15,19 +15,35 @@ interface EventCardProps {
 export function EventCard({ event }: EventCardProps) {
   const getTicketPriceDisplay = () => {
     if (!event.tickets || event.tickets.length === 0) {
-      return "Free";
+      return "Tickets not available";
     }
 
     const prices = event.tickets.map((ticket) => ticket.price);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
 
+    // If all tickets are free
+    if (maxPrice === 0) {
+      return "Free";
+    }
+
+    // If there are both free and paid tickets
+    if (minPrice === 0) {
+      return `From $${Math.min(...prices.filter((price) => price > 0)).toFixed(
+        2
+      )}`;
+    }
+
+    // If all tickets are paid and same price
     if (minPrice === maxPrice) {
       return `$${minPrice.toFixed(2)}`;
     }
 
+    // If different paid ticket prices
     return `From $${minPrice.toFixed(2)}`;
   };
+
+  const hasFreeTickets = event.tickets?.some((ticket) => ticket.price === 0);
 
   return (
     <Link href={`/events/${event.id}`}>
@@ -39,14 +55,22 @@ export function EventCard({ event }: EventCardProps) {
             fill
             className="object-cover"
           />
-          {event.category && (
-            <div className="absolute top-2 right-2">
+          <div className="absolute top-2 right-2 flex flex-col gap-2 items-end">
+            {event.category && (
               <Badge variant="secondary" className="bg-white/90">
                 <Tag className="h-3 w-3 mr-1" />
                 {event.category.name}
               </Badge>
-            </div>
-          )}
+            )}
+            {hasFreeTickets && (
+              <Badge
+                variant="default"
+                className="bg-primary text-primary-foreground"
+              >
+                Free tickets available
+              </Badge>
+            )}
+          </div>
         </div>
         <CardContent className="p-4">
           <h3 className="text-xl font-semibold line-clamp-1 mb-2">
