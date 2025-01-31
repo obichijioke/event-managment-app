@@ -86,12 +86,22 @@ export function Navbar() {
                     : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                 }`}
               >
-                Events
+                Find Events
               </Link>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
+            <Link
+              href="/organizer/dashboard"
+              className={`px-3 py-2 rounded-md text-sm font-medium ${
+                isActive("/organizer/dashboard")
+                  ? "bg-gray-100 text-gray-900"
+                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              Create Event
+            </Link>
             {session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
