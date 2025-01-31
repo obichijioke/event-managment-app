@@ -8,12 +8,15 @@ import {
   Calendar,
   Clock,
   MapPin,
-  User,
   ArrowLeft,
   Facebook,
   Twitter,
+  TicketIcon,
   Link as LinkIcon,
   Tag,
+  Mail,
+  Phone,
+  Instagram,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -31,6 +34,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+  DialogHeader,
+} from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 export default function EventDetailPage() {
   const [event, setEvent] = useState<Event | null>(null);
@@ -142,7 +154,39 @@ export default function EventDetailPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
+        {/* Main Cover Image */}
+        {event.cover_image_url && (
+          <div className="md:col-span-2 mb-4">
+            <Dialog>
+              <DialogTrigger asChild>
+                <div className="relative aspect-video cursor-pointer rounded-lg overflow-hidden hover:opacity-95 transition-opacity md:h-[250px] h-[200px] w-full">
+                  <Image
+                    src={event.cover_image_url}
+                    alt={event.name}
+                    fill
+                    className="object-cover "
+                    priority
+                  />
+                </div>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle className="hidden">Cover Image</DialogTitle>
+                </DialogHeader>
+                <div className="relative aspect-video">
+                  <Image
+                    src={event.cover_image_url}
+                    alt={event.name}
+                    fill
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
         {/* Navigation and Share */}
         <div className="flex justify-between items-center mb-6">
           <Button
@@ -198,40 +242,52 @@ export default function EventDetailPage() {
         </div>
 
         {/* Event Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">{event.name}</h1>
-          {event.category && (
-            <div className="mb-4">
-              <Badge variant="secondary">
-                <Tag className="h-4 w-4 mr-2" />
-                {event.category.name}
-              </Badge>
-            </div>
-          )}
-          <div className="flex flex-wrap gap-4 text-gray-600">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              <span>
-                {format(new Date(event.start_time), "EEEE, MMMM d, yyyy")}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              <span>
-                {format(new Date(event.start_time), "h:mm a")} -{" "}
-                {format(new Date(event.end_time), "h:mm a")}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              <span>{getLocationDisplay()}</span>
-            </div>
-            {event.organizer && (
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                <span>Organized by {event.organizer.name}</span>
+        <div className="flex items-start gap-6 mb-8">
+          {/* Date Box */}
+          <div className="flex-shrink-0">
+            <div className="w-24 text-center">
+              <div className="bg-primary text-primary-foreground px-4 py-1 rounded-t-md uppercase text-sm font-medium">
+                {format(new Date(event.start_time), "MMM")}
               </div>
-            )}
+              <div className="bg-muted px-4 py-3 rounded-b-md">
+                <span className="text-3xl font-bold">
+                  {format(new Date(event.start_time), "dd")}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Event Info */}
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold mb-4">{event.name}</h1>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Calendar className="h-5 w-5" />
+                <span>
+                  {format(new Date(event.start_time), "EEEE, MMMM d, yyyy")}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="h-5 w-5" />
+                <span>
+                  {format(new Date(event.start_time), "h:mm a")} -{" "}
+                  {format(new Date(event.end_time), "h:mm a")}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <MapPin className="h-5 w-5" />
+                <span>{getLocationDisplay()}</span>
+              </div>
+
+              {event.category && (
+                <div className="mt-2">
+                  <Badge variant="secondary">
+                    <Tag className="h-4 w-4 mr-2" />
+                    {event.category.name}
+                  </Badge>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -253,6 +309,51 @@ export default function EventDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Image Gallery Card */}
+            {(event.cover_image_url ||
+              (event.gallery_image_urls &&
+                event.gallery_image_urls.length > 0)) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Event Gallery</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {/* Gallery Images */}
+                    {event.gallery_image_urls?.map((imageUrl, index) => (
+                      <Dialog key={imageUrl}>
+                        <DialogTrigger asChild>
+                          <div className="relative aspect-video cursor-pointer rounded-lg overflow-hidden hover:opacity-95 transition-opacity">
+                            <Image
+                              src={imageUrl}
+                              alt={`${event.name} gallery image ${index + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl">
+                          <DialogHeader>
+                            <DialogTitle className="hidden">
+                              Gallery Image {index + 1}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="relative aspect-video">
+                            <Image
+                              src={imageUrl}
+                              alt={`${event.name} gallery image ${index + 1}`}
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Map Card - Only show if it's not an online event */}
             {!event.is_online && event.venue && (
@@ -279,8 +380,9 @@ export default function EventDetailPage() {
             )}
           </div>
 
-          {/* Ticket Information */}
-          <div>
+          {/* Sidebar */}
+          <div className="space-y-4">
+            {/* Ticket Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Tickets</CardTitle>
@@ -311,46 +413,80 @@ export default function EventDetailPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Additional Event Information */}
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle>Event Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-1">Date and Time</h3>
-                  <p className="text-sm text-gray-600">
-                    {format(new Date(event.start_time), "EEEE, MMMM d, yyyy")}
-                    <br />
-                    {format(new Date(event.start_time), "h:mm a")} -{" "}
-                    {format(new Date(event.end_time), "h:mm a")}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">
-                    {event.is_online ? "Online Event" : "Location"}
-                  </h3>
-                  {event.is_online ? (
-                    <p className="text-sm text-gray-600">
-                      {event.online_url || "Link will be provided"}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-600">
-                      {getLocationDisplay()}
-                    </p>
-                  )}
-                </div>
-                {event.organizer && (
-                  <div>
-                    <h3 className="font-semibold mb-1">Organizer</h3>
-                    <p className="text-sm text-gray-600">
-                      {event.organizer.name}
-                    </p>
+            {/* Organizer Card */}
+            {event.organizer && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Organizer</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Profile Header */}
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden bg-muted">
+                      <Image
+                        src={
+                          event.organizer.avatar_url || "/user-placeholder.png"
+                        }
+                        alt={event.organizer.name || "Organizer"}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg">
+                        {event.organizer.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Event Organizer
+                      </p>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+
+                  {/* Contact Info */}
+                  <div className="space-y-2">
+                    {event.organizer.phone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{event.organizer.phone}</span>
+                      </div>
+                    )}
+                    {event.organizer.email && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>{event.organizer.email}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Social Links */}
+                  <div className="space-y-4">
+                    <Separator />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button variant="outline" className="w-full" size="sm">
+                        <Facebook className="h-4 w-4 mr-2" />
+                        Facebook
+                      </Button>
+                      <Button variant="outline" className="w-full" size="sm">
+                        <Twitter className="h-4 w-4 mr-2" />
+                        Twitter
+                      </Button>
+                      <Button variant="outline" className="w-full" size="sm">
+                        <Instagram className="h-4 w-4 mr-2" />
+                        Instagram
+                      </Button>
+                      <Button variant="outline" className="w-full" size="sm">
+                        <TicketIcon className="h-4 w-4 mr-2" />
+                        TikTok
+                      </Button>
+                    </div>
+                    <Button className="w-full" variant="secondary">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Send Message
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

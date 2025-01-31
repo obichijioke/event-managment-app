@@ -44,6 +44,8 @@ export type Event = {
     id: string;
     name: string;
     email: string;
+    phone?: string;
+    avatar_url?: string;
   };
   category?: Category;
   tickets?: {
