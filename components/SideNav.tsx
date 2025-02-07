@@ -69,6 +69,11 @@ export function SideNav() {
   return (
     <nav className="w-64 bg-white border-r h-screen fixed left-0 top-0 pt-4">
       <div className="px-3 py-2">
+        <Link href="/" className="flex items-center gap-2 px-4 py-3 mb-6">
+          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            EventHub
+          </span>
+        </Link>
         <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">Menu</h2>
         <div className="space-y-1">
           {navigation.map((item) => {

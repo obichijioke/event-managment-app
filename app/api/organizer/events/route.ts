@@ -37,6 +37,11 @@ export async function GET() {
           id,
           email,
           name
+        ),
+        tickets (
+          id,
+          price,
+          quantity_available
         )
       `
       )
