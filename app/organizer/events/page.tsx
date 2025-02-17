@@ -228,7 +228,13 @@ export default function EventsPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Manage Event</DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        router.push(`/organizer/events/${event.id}`)
+                      }
+                    >
+                      Manage Event
+                    </DropdownMenuItem>
                     <DropdownMenuItem>Duplicate</DropdownMenuItem>
                     <DropdownMenuItem className="text-red-600">
                       Delete
