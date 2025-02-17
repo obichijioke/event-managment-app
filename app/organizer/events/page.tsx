@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -223,9 +224,6 @@ export default function EventsPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>Manage Event</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handlePreview(event)}>
-                      Preview
-                    </DropdownMenuItem>
                     <DropdownMenuItem>Duplicate</DropdownMenuItem>
                     <DropdownMenuItem className="text-red-600">
                       Delete
