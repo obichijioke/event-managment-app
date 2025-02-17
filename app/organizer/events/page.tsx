@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 
 interface Event {
   id: string;
@@ -53,6 +54,7 @@ interface Event {
 }
 
 export default function EventsPage() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,7 +121,10 @@ export default function EventsPage() {
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Events</h1>
-        <Button className="bg-[#8BC34A] hover:bg-[#7CB342]">
+        <Button
+          className="bg-[#8BC34A] hover:bg-[#7CB342]"
+          onClick={() => router.push("/organizer/events/new")}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Create Event
         </Button>

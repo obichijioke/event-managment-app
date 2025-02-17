@@ -8,7 +8,7 @@ export default function OrganizerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <SideNav />
       <div className="pl-64">{children}</div>
     </div>
